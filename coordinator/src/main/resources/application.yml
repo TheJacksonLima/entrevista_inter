@@ -1,0 +1,36 @@
+micronaut:
+  application:
+    name: piggies-payment-coordinator
+  server:
+    port: ${COORDINATOR_PORT:8080}
+  http:
+    services:
+      # Chamadas síncronas entre serviços (ver docs/diagramas.md)
+      reserve:
+        url: ${RESERVE_URL:`http://localhost:8081`}
+        read-timeout: 3s
+      merchant:
+        url: ${MERCHANT_URL:`http://localhost:8082`}
+        read-timeout: 3s
+
+datasources:
+  default:
+    url: ${COORDINATOR_DB_URL:`jdbc:postgresql://localhost:5432/coordinator`}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    db-type: postgres
+    dialect: POSTGRES
+
+jpa:
+  default:
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: update
+
+# Orquestração do pagamento
+spp:
+  orchestrator:
+    timeout: 5s        # tempo máximo de cada etapa (reserva / validação)
+    retry-attempts: 3  # tentativas de confirmar débito e registrar crédito

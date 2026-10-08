@@ -35,16 +35,16 @@ Voltar: [[00 - Índice]]
 ## Checklist de acompanhamento
 
 ### Setup
-- [ ] Confirmar que o JDK 25 do `mise.toml` está instalado (`java -version`) e o build compila
-- [ ] Decidir estrutura (multi-módulo — ver [[09 - Decisões e Riscos]])
-- [ ] Remover `Piggy.java` / `Test_jacksonTest` placeholders; renomear `artifactId`
-- [ ] Criar `docs/ai/` e registrar prompts desde o início
+- [ ] Confirmar que o JDK 25 do `mise.toml` está instalado (`java -version`) e o build compila *(build verificado só com JDK 21 — ver [[11 - Implementação Dev 4]])*
+- [x] Decidir estrutura (multi-módulo — ver [[09 - Decisões e Riscos]]) e implementar
+- [x] Remover `Piggy.java` / `Test_jacksonTest` placeholders; renomear `artifactId`
+- [x] Criar `docs/ai/` (falta registrar os prompts usados)
 
 ### Contratos ([[03 - Contratos (Contract-First)]])
-- [ ] `coordinator.openapi.yaml`
-- [ ] `reserve.openapi.yaml`
-- [ ] `merchant.openapi.yaml`
-- [ ] `pagamento-confirmado.v1.schema.json`
+- [x] `coordinator.openapi.yaml`
+- [x] `reserve.openapi.yaml`
+- [x] `merchant.openapi.yaml`
+- [x] `pagamento-confirmado.v1.schema.json`
 
 ### Reserve ([[05 - PiggiesReserveService]])
 - [ ] Entidades + repositórios
@@ -61,10 +61,10 @@ Voltar: [[00 - Índice]]
 
 ### Coordinator ([[04 - PiggiesPaymentCoordinator]])
 - [ ] `POST /payments` 202 + `GET /payments/{id}`
-- [ ] Clients HTTP não bloqueantes
-- [ ] Orquestrador com reserva + validação em paralelo
-- [ ] Compensação (release) e timeout
-- [ ] Chamada de crédito ao Merchant com retry idempotente
+- [x] Clients HTTP (bloqueantes, fora da thread de borda) com timeout e retry
+- [x] Orquestrador com reserva + validação em paralelo
+- [x] Compensação (release) e timeout
+- [x] Chamada de crédito ao Merchant com retry idempotente
 - [ ] Testes unit + integração
 
 ### Fechamento

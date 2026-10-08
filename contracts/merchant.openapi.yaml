@@ -1,0 +1,122 @@
+openapi: 3.0.3
+info:
+  title: PiggiesMerchantService
+  version: 1.0.0
+  description: |
+    Valida o merchant e registra o crédito (recebível). Ao registrar um recebível **novo**,
+    publica o evento PagamentoConfirmado no Kafka
+    (contracts/events/pagamento-confirmado.v1.schema.json, tópico piggies.pagamento-confirmado.v1,
+    chave = paymentId). O crédito é idempotente por paymentId.
+servers:
+  - url: http://localhost:8082
+paths:
+  /merchants/{merchantId}/status:
+    get:
+      operationId: getMerchantStatus
+      summary: Informa se o merchant existe e está ativo
+      parameters:
+        - $ref: '#/components/parameters/MerchantId'
+      responses:
+        '200':
+          description: Merchant encontrado (active pode ser true ou false).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MerchantStatus' }
+        '404':
+          description: Merchant desconhecido.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+  /receivables:
+    post:
+      operationId: createReceivable
+      summary: Registra o crédito do merchant e publica PagamentoConfirmado
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReceivableRequest' }
+      responses:
+        '201':
+          description: Recebível criado; evento publicado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReceivableResponse' }
+        '200':
+          description: paymentId já creditado antes (idempotente); devolve o recebível existente.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReceivableResponse' }
+        '400':
+          description: Body inválido.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+        '404':
+          description: Merchant desconhecido.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+        '409':
+          description: Merchant inativo.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+  /merchants/{merchantId}/receivables:
+    get:
+      operationId: listReceivables
+      summary: Lista os recebíveis do merchant (apoio a testes e demonstração)
+      parameters:
+        - $ref: '#/components/parameters/MerchantId'
+      responses:
+        '200':
+          description: Recebíveis do merchant.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ReceivableResponse' }
+        '404':
+          description: Merchant desconhecido.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+components:
+  parameters:
+    MerchantId:
+      name: merchantId
+      in: path
+      required: true
+      schema: { type: string }
+  schemas:
+    MerchantStatus:
+      type: object
+      required: [merchantId, active]
+      properties:
+        merchantId: { type: string, example: X }
+        active: { type: boolean }
+    ReceivableRequest:
+      type: object
+      required: [paymentId, merchantId, amount]
+      properties:
+        paymentId: { type: string, format: uuid }
+        merchantId: { type: string, minLength: 1, example: X }
+        amount: { type: integer, format: int64, minimum: 1, example: 100 }
+      additionalProperties: false
+    ReceivableResponse:
+      type: object
+      required: [receivableId, paymentId, merchantId, amount, createdAt]
+      properties:
+        receivableId: { type: string, format: uuid }
+        paymentId: { type: string, format: uuid }
+        merchantId: { type: string }
+        amount: { type: integer, format: int64 }
+        createdAt: { type: string, format: date-time }
+    Problem:
+      type: object
+      description: RFC 7807 (application/problem+json).
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }

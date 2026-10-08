@@ -3,26 +3,33 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>co.inter.piggies</groupId>
-  <artifactId>test_jackson</artifactId>
+  <artifactId>spp</artifactId>
   <version>0.1</version>
-  <packaging>${packaging}</packaging>
+  <packaging>pom</packaging>
+  <name>SPP - Sistema de Pagamento com Porquinhos</name>
 
   <parent>
     <groupId>io.micronaut.platform</groupId>
     <artifactId>micronaut-parent</artifactId>
     <version>4.10.6</version>
   </parent>
+
+  <modules>
+    <module>testing-support</module>
+    <module>coordinator</module>
+    <module>reserve</module>
+    <module>merchant</module>
+  </modules>
+
   <properties>
-    <packaging>jar</packaging>
     <jdk.version>25</jdk.version>
     <release.version>25</release.version>
     <micronaut.version>4.10.6</micronaut.version>
     <micronaut.aot.enabled>false</micronaut.aot.enabled>
-    <micronaut.aot.packageName>co.inter.piggies.aot.generated</micronaut.aot.packageName>
     <micronaut.runtime>netty</micronaut.runtime>
-    <exec.mainClass>co.inter.piggies.Application</exec.mainClass>
     <!-- Testcontainers 1.21.4+ é compatível com o Docker Desktop 29+ (API mínima 1.44) -->
     <tc.version>1.21.4</tc.version>
+    <json-schema-validator.version>1.5.6</json-schema-validator.version>
   </properties>
 
   <repositories>
@@ -32,6 +39,7 @@
     </repository>
   </repositories>
 
+  <!-- Dependências comuns aos três serviços (herdadas pelos módulos). -->
   <dependencies>
     <dependency>
       <groupId>io.micronaut</groupId>
@@ -51,11 +59,6 @@
     <dependency>
       <groupId>io.micronaut.data</groupId>
       <artifactId>micronaut-data-tx-hibernate</artifactId>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.micronaut.kafka</groupId>
-      <artifactId>micronaut-kafka</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -118,11 +121,8 @@
       <artifactId>lombok</artifactId>
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>io.micronaut</groupId>
-      <artifactId>micronaut-http-client</artifactId>
-      <scope>test</scope>
-    </dependency>
+
+    <!-- Testes -->
     <dependency>
       <groupId>io.micronaut.test</groupId>
       <artifactId>micronaut-test-junit5</artifactId>
@@ -160,43 +160,8 @@
       <artifactId>junit-jupiter-params</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <version>${tc.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>kafka</artifactId>
-      <version>${tc.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>postgresql</artifactId>
-      <version>${tc.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>testcontainers</artifactId>
-      <version>${tc.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>jdbc</artifactId>
-      <version>${tc.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.testcontainers</groupId>
-      <artifactId>database-commons</artifactId>
-      <version>${tc.version}</version>
-      <scope>test</scope>
-    </dependency>
   </dependencies>
+
   <build>
     <plugins>
       <plugin>
@@ -204,7 +169,6 @@
         <artifactId>micronaut-maven-plugin</artifactId>
         <configuration>
           <shared>true</shared>
-          <configFile>aot-${packaging}.properties</configFile>
         </configuration>
       </plugin>
       <plugin>
@@ -215,9 +179,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <!-- Uncomment to enable incremental compilation -->
-          <!-- <useIncrementalCompilation>false</useIncrementalCompilation> -->
-
           <annotationProcessorPaths combine.self="override">
             <path>
               <groupId>org.projectlombok</groupId>
@@ -279,7 +240,7 @@
           </annotationProcessorPaths>
           <compilerArgs>
             <arg>-Amicronaut.processing.group=co.inter.piggies</arg>
-            <arg>-Amicronaut.processing.module=test_jackson</arg>
+            <arg>-Amicronaut.processing.module=${project.artifactId}</arg>
           </compilerArgs>
         </configuration>
       </plugin>

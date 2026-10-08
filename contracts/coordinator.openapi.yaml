@@ -1,0 +1,115 @@
+openapi: 3.0.3
+info:
+  title: PiggiesPaymentCoordinator
+  version: 1.0.0
+  description: |
+    Ponto de entrada do App. Serviço de borda **assíncrono**: o POST registra a intenção
+    (status PENDING) e responde 202; o processamento (reserva + validação do merchant,
+    confirmação do débito e crédito) continua em segundo plano. O App consulta o resultado
+    com GET /payments/{paymentId}.
+servers:
+  - url: http://localhost:8080
+paths:
+  /payments:
+    post:
+      operationId: createPayment
+      summary: Inicia um pagamento (QR Code → merchant + valor)
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema: { type: string, maxLength: 100 }
+          description: Repetir a mesma chave devolve o mesmo paymentId, sem criar outro pagamento.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PaymentRequest' }
+      responses:
+        '202':
+          description: Intenção registrada; processamento em andamento.
+          headers:
+            Location:
+              schema: { type: string }
+              description: /payments/{paymentId}
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaymentAccepted' }
+        '400':
+          description: Body inválido (amount < 1, ids vazios...).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+  /payments/{paymentId}:
+    get:
+      operationId: getPayment
+      summary: Consulta o status do pagamento (polling do App)
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Pagamento encontrado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaymentStatusResponse' }
+        '404':
+          description: Pagamento inexistente.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+components:
+  schemas:
+    PaymentRequest:
+      type: object
+      required: [clientId, merchantId, amount]
+      properties:
+        clientId: { type: string, minLength: 1, example: A }
+        merchantId: { type: string, minLength: 1, example: X }
+        amount:
+          type: integer
+          format: int64
+          minimum: 1
+          description: Quantidade inteira de Piggies.
+          example: 100
+      additionalProperties: false
+    PaymentAccepted:
+      type: object
+      required: [paymentId, status]
+      properties:
+        paymentId: { type: string, format: uuid }
+        status: { $ref: '#/components/schemas/PaymentStatus' }
+    PaymentStatusResponse:
+      type: object
+      required: [paymentId, clientId, merchantId, amount, status]
+      properties:
+        paymentId: { type: string, format: uuid }
+        clientId: { type: string }
+        merchantId: { type: string }
+        amount: { type: integer, format: int64 }
+        status: { $ref: '#/components/schemas/PaymentStatus' }
+        reason:
+          type: string
+          nullable: true
+          description: Presente quando status = REJECTED.
+          enum:
+            - INSUFFICIENT_FUNDS
+            - MERCHANT_INVALID
+            - MERCHANT_UNAVAILABLE
+            - RESERVE_UNAVAILABLE
+    PaymentStatus:
+      type: string
+      description: |
+        PENDING (em processamento) → CONFIRMED (debitado e creditado) ou REJECTED (saldo
+        insuficiente, merchant inválido ou serviço indisponível).
+      enum: [PENDING, CONFIRMED, REJECTED]
+    Problem:
+      type: object
+      description: RFC 7807 (application/problem+json).
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>co.inter.piggies</groupId>
+    <artifactId>spp</artifactId>
+    <version>0.1</version>
+  </parent>
+
+  <artifactId>merchant</artifactId>
+  <name>PiggiesMerchantService</name>
+
+  <properties>
+    <exec.mainClass>co.inter.piggies.merchant.MerchantApplication</exec.mainClass>
+  </properties>
+
+  <dependencies>
+    <!-- Publica PagamentoConfirmado -->
+    <dependency>
+      <groupId>io.micronaut.kafka</groupId>
+      <artifactId>micronaut-kafka</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.micronaut</groupId>
+      <artifactId>micronaut-http-client</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>co.inter.piggies</groupId>
+      <artifactId>testing-support</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>

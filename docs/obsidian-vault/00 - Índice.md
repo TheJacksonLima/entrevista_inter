@@ -22,6 +22,7 @@ aliases: [Home, SPP]
 | 08 | [[08 - Cronograma 1h30]] | Plano de entregas, divisão em equipe, checklist |
 | 09 | [[09 - Decisões e Riscos]] | ADRs curtos, pontos em aberto, perguntas que a banca pode fazer |
 | 10 | [[10 - Divisão da Equipe (4 devs)]] | Quem faz o quê, interfaces combinadas, checkpoints |
+| 11 | [[11 - Implementação Dev 4]] | O que já está pronto (estrutura, contratos, orquestrador) e guia de partida |
 
 ## Como usar este vault
 - Abra a pasta `docs/obsidian-vault` como vault no Obsidian (*Open folder as vault*).

@@ -1,0 +1,21 @@
+micronaut:
+  application:
+    name: piggies-reserve-service
+  server:
+    port: ${RESERVE_PORT:8081}
+
+datasources:
+  default:
+    url: ${RESERVE_DB_URL:`jdbc:postgresql://localhost:5432/reserve`}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    db-type: postgres
+    dialect: POSTGRES
+
+jpa:
+  default:
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: update

@@ -1,0 +1,137 @@
+openapi: 3.0.3
+info:
+  title: PiggiesReserveService
+  version: 1.0.0
+  description: |
+    Dono do saldo em Piggies dos clientes. Reserva separa o valor (available → reserved);
+    confirmar debita de fato; liberar devolve ao saldo. Todas as operações são **idempotentes**
+    por paymentId. Após CONFIRMED não há cancelamento.
+servers:
+  - url: http://localhost:8081
+paths:
+  /reserves:
+    post:
+      operationId: createReserve
+      summary: Reserva saldo do cliente para um pagamento
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReserveRequest' }
+      responses:
+        '201':
+          description: Reserva criada (PENDING).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReserveResponse' }
+        '200':
+          description: paymentId já reservado antes (idempotente); devolve a reserva existente.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReserveResponse' }
+        '400':
+          description: Body inválido.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+        '409':
+          description: Saldo insuficiente.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+  /reserves/{paymentId}:
+    get:
+      operationId: getReserve
+      summary: Consulta a reserva
+      parameters:
+        - $ref: '#/components/parameters/PaymentId'
+      responses:
+        '200':
+          description: Reserva encontrada.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReserveResponse' }
+        '404':
+          description: Reserva inexistente.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+  /reserves/{paymentId}/confirm:
+    post:
+      operationId: confirmReserve
+      summary: Confirma o débito (PENDING → CONFIRMED)
+      parameters:
+        - $ref: '#/components/parameters/PaymentId'
+      responses:
+        '200':
+          description: Débito confirmado (também quando já estava CONFIRMED).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReserveResponse' }
+        '404':
+          description: Reserva inexistente.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+        '409':
+          description: Reserva já liberada (RELEASED).
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+  /reserves/{paymentId}/release:
+    post:
+      operationId: releaseReserve
+      summary: Libera a reserva (PENDING → RELEASED) — compensação de pagamento recusado
+      parameters:
+        - $ref: '#/components/parameters/PaymentId'
+      responses:
+        '200':
+          description: Reserva liberada (também quando já estava RELEASED).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReserveResponse' }
+        '404':
+          description: Reserva inexistente.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+        '409':
+          description: Reserva já confirmada (CONFIRMED) — não há cancelamento pós-confirmação.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+components:
+  parameters:
+    PaymentId:
+      name: paymentId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+  schemas:
+    ReserveRequest:
+      type: object
+      required: [paymentId, clientId, amount]
+      properties:
+        paymentId: { type: string, format: uuid }
+        clientId: { type: string, minLength: 1, example: A }
+        amount: { type: integer, format: int64, minimum: 1, example: 100 }
+      additionalProperties: false
+    ReserveResponse:
+      type: object
+      required: [paymentId, clientId, amount, status]
+      properties:
+        paymentId: { type: string, format: uuid }
+        clientId: { type: string }
+        amount: { type: integer, format: int64 }
+        status: { $ref: '#/components/schemas/ReserveStatus' }
+    ReserveStatus:
+      type: string
+      enum: [PENDING, CONFIRMED, RELEASED]
+    Problem:
+      type: object
+      description: RFC 7807 (application/problem+json).
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }

@@ -43,6 +43,9 @@ Ponto de entrada do App. **Registra a intenção** e **orquestra** de ponta a po
 - **Idempotência**: `Idempotency-Key` repetida → devolve o mesmo `paymentId`.
 - **Recuperação** (stretch): job que retoma pagamentos `PENDING` antigos.
 
+> [!success] Orquestração já implementada
+> `DefaultPaymentOrchestrator`, gateways HTTP e portas estão prontos e testados — veja [[11 - Implementação Dev 4]]. O Dev 1 só precisa chamar `orchestrator.submit(...)` e implementar `PaymentStatusUpdater`.
+
 ## Estrutura de pacotes sugerida
 ```
 co.inter.piggies.coordinator

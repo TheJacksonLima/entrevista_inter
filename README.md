@@ -144,3 +144,23 @@ sequenceDiagram
     C->>PC: GET /payments/{paymentId}
     PC-->>C: CONFIRMED | REJECTED
 ```
+
+
+## Estrutura e como rodar
+
+```
+contracts/          OpenAPI de cada serviço + JSON Schema do evento Kafka (contract-first)
+coordinator/        PiggiesPaymentCoordinator  (porta 8080)
+reserve/            PiggiesReserveService      (porta 8081)
+merchant/           PiggiesMerchantService     (porta 8082)
+testing-support/    bases de teste (Testcontainers) e validação de contratos
+docker-compose.yml  Postgres (3 bancos) + Kafka para rodar à mão
+docs/               diagramas, vault do Obsidian (docs/obsidian-vault) e registros de IA (docs/ai)
+```
+
+```bash
+docker compose up -d                       # Postgres :5432 e Kafka :9092
+./mvnw -pl coordinator -am mn:run          # idem para reserve / merchant (em terminais separados)
+./mvnw test                                # unitários + integração (integração requer Docker)
+./mvnw test -Dtest='!*ApplicationTest'     # só o que não precisa de Docker
+```

@@ -43,18 +43,18 @@ Voltar: [[00 - Índice]] · Cronograma geral: [[08 - Cronograma 1h30]]
 - [ ] Publicar `PagamentoConfirmado` (`@KafkaClient`, key=`paymentId`, `acks=all`) após gravar
 - [ ] Testes: unit; integração com Postgres + Kafka Testcontainers, validando o evento contra o JSON Schema
 
-### Dev 4 — Plataforma, contratos e orquestração
+### Dev 4 — Plataforma, contratos e orquestração  ✅ fases A e B prontas (ver [[11 - Implementação Dev 4]])
 **Fase A (0:00–0:25), destravando todos**
-- [ ] Converter em multi-módulo (`pom` pai + `coordinator`, `reserve`, `merchant`), remover `Piggy`/`Test_jacksonTest`, mover `AbstractIntegrationTest` para um módulo `testing-support` (ou copiar por módulo)
-- [ ] Publicar a estrutura numa branch `main` **antes** dos outros começarem a codar
-- [ ] Escrever/validar os 3 OpenAPI + 1 JSON Schema em `contracts/` ([[03 - Contratos (Contract-First)]])
-- [ ] Criar `docs/ai/` e `docker-compose.yml` (Postgres + Kafka) para rodar manualmente
+- [x] Converter em multi-módulo (`pom` pai + `coordinator`, `reserve`, `merchant`), remover `Piggy`/`Test_jacksonTest`, mover as bases de teste para o módulo `testing-support`
+- [x] Publicar a estrutura numa branch `main` **antes** dos outros começarem a codar
+- [x] Escrever/validar os 3 OpenAPI + 1 JSON Schema em `contracts/` ([[03 - Contratos (Contract-First)]])
+- [x] Criar `docs/ai/` e `docker-compose.yml` (Postgres + Kafka) para rodar manualmente
 
 **Fase B (0:25–1:00), o coração do Coordinator**
-- [ ] `ReserveClient` e `MerchantClient` (`@Client` declarativo, timeout curto, 1 retry)
-- [ ] `PaymentOrchestrator`: reserva + validação em paralelo → confirm → crédito → status; recusas → `REJECTED`
-- [ ] Compensação `release` e timeout global ([[09 - Decisões e Riscos]])
-- [ ] Testes unit do orquestrador com todos os ramos (clients mockados)
+- [x] `ReserveClient` e `MerchantClient` (`@Client` declarativo, timeout curto, 1 retry)
+- [x] `PaymentOrchestrator`: reserva + validação em paralelo → confirm → crédito → status; recusas → `REJECTED`
+- [x] Compensação `release` e timeout global ([[09 - Decisões e Riscos]])
+- [x] Testes unit do orquestrador com todos os ramos (clients mockados)
 
 **Fase C (1:00–1:30), integração**
 - [ ] Teste ponta a ponta com os 3 serviços e script `curl` no README
@@ -63,18 +63,17 @@ Voltar: [[00 - Índice]] · Cronograma geral: [[08 - Cronograma 1h30]]
 ## Combinados de interface (fechar nos primeiros 10 min)
 
 ```java
-// Dev 4 entrega, Dev 1 chama (stub inicial no minuto 0:25)
-public interface PaymentOrchestrator {
-    void process(UUID paymentId);   // assíncrono, não lança; atualiza status via PaymentService
-}
+// Implementado (ver [[11 - Implementação Dev 4]])
+// Dev 1 chama, depois de gravar PENDING e antes do 202:
+CompletableFuture<Void> PaymentOrchestrator.submit(PaymentIntent intent);   // PaymentIntent(paymentId, clientId, merchantId, amount)
 
-// Dev 1 entrega, Dev 4 chama
-public interface PaymentService {
-    Payment get(UUID id);
-    void markConfirmed(UUID id);
-    void markRejected(UUID id, String reason);
+// Dev 1 implementa (um @Singleton); até lá há um stub @Secondary que só loga:
+interface PaymentStatusUpdater {
+    void markConfirmed(UUID paymentId);
+    void markRejected(UUID paymentId, RejectionReason reason);
 }
 ```
+O orquestrador **não depende da entidade `Payment`**, só do record `PaymentIntent`, então Dev 1 e Dev 4 não se bloqueiam.
 Reserve e Merchant não têm dependência de código entre si nem do Coordinator: só do **contrato HTTP**. Isso permite que o Dev 4 teste o orquestrador com clients mockados antes de os serviços existirem.
 
 ## Linha do tempo cruzada

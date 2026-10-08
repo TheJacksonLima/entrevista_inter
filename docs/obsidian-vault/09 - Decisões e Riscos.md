@@ -43,6 +43,15 @@ Nome `PENDING` alinhado ao diagrama.
 ## ADR-9 — Contratos reais do último commit (`3eccfca`) ✅
 Rotas adotadas, vindas de `docs/diagramas.md`: `POST /reserves`, `POST /reserves/{id}/confirm`, `GET /merchants/{merchantId}/status`, `POST /receivables {paymentId, merchantId, amount}`. Status do pagamento: `PENDING`, `CONFIRMED`, **`REJECTED`**. O Merchant não recebe `clientId`, então o evento `PagamentoConfirmado` não o carrega.
 
+## ADR-10 — Orquestrador desacoplado da entidade `Payment` ✅
+`PaymentOrchestrator.submit(PaymentIntent)` recebe um record e devolve o resultado por `PaymentStatusUpdater` (porta). Assim o Dev 1 (borda/persistência) e o Dev 4 (orquestração) trabalham em paralelo sem depender do mesmo arquivo. Clients HTTP ficam atrás de `ReserveGateway`/`MerchantGateway`, o que permite testar o orquestrador com fakes, sem Mockito.
+
+## ADR-11 — Nunca rejeitar após o débito confirmado ✅
+Se `confirm` falha, ou o crédito falha depois do débito, o pagamento **fica `PENDING`** com erro logado; não vira `REJECTED`. Motivo: o enunciado proíbe cancelamento pós-confirmação e o crédito é idempotente (reprocessar é seguro). Lacuna conhecida: falta um job de reprocessamento (stretch).
+
+## ADR-12 — Entidade `Placeholder` temporária por módulo
+Micronaut/Hibernate não inicializa sem `@Entity`. Cada módulo traz uma `Placeholder` descartável para a app subir desde o início; cada dev a remove ao criar sua primeira entidade.
+
 ## ⚠️ Lacuna no diagrama: reserva órfã
 No ramo `REJECTED` o diagrama só marca o status. Se a reserva deu certo e o merchant está inativo, o saldo fica preso em `PENDING`. Mantive o `POST /reserves/{id}/release` como compensação (nota [[05 - PiggiesReserveService]]) — **combinar com o time** se entra no escopo ou vira expiração (stretch).
 
@@ -55,6 +64,7 @@ No ramo `REJECTED` o diagrama só marca o status. Se a reserva deu certo e o mer
 | Recebível gravado mas evento não publicado | M | M | Flag `event_published` + republicar no retry; Outbox como stretch |
 | Crédito/evento duplicado | A | A | UNIQUE `payment_id` + endpoint idempotente |
 | Reserva órfã (Coordinator caiu no meio) | M | M | Timeout + job de expiração (stretch) |
+| Build/testes só validados com JDK 21 e sem Docker (JDK 25 e Testcontainers não disponíveis na máquina do Dev 4) | A | M | Rodar `java -version` (=25) e `./mvnw test` com Docker na 1ª execução da equipe |
 | Código de IA não compreendido | M | **Eliminatório** | Revisar em dupla; registrar prompts em `docs/ai/` |
 | Divergência entre contrato e implementação | M | M | Contrato primeiro; testes de contrato |
 

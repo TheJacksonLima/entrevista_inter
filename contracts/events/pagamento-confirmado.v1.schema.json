@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://inter.co/piggies/events/pagamento-confirmado.v1.schema.json",
+  "title": "PagamentoConfirmado",
+  "description": "Publicado pelo PiggiesMerchantService no tópico piggies.pagamento-confirmado.v1 (chave = paymentId) depois de registrar o recebível do merchant.",
+  "type": "object",
+  "required": ["eventId", "paymentId", "merchantId", "amount", "occurredAt"],
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Identificador único do evento."
+    },
+    "paymentId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Identificador do pagamento (mesmo da chave da mensagem)."
+    },
+    "merchantId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Merchant que recebeu o crédito."
+    },
+    "amount": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Quantidade inteira de Piggies creditada."
+    },
+    "occurredAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Momento em que o crédito foi registrado (UTC)."
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,2 @@
+# A conexão com PostgreSQL e Kafka nos testes é feita pelos Testcontainers
+# em AbstractIntegrationTest (via TestPropertyProvider).

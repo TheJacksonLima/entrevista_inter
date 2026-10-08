@@ -7,7 +7,7 @@ tags: [spp, implementacao, dev4]
 Voltar: [[00 - Índice]] · Plano: [[10 - Divisão da Equipe (4 devs)]]
 
 > [!success] Estado
-> Fases A e B do Dev 4 **concluídas**. Os outros três devs já podem começar: estrutura, contratos, infra local, bases de teste e o orquestrador existem. Falta só a fase C (e2e), que depende dos serviços dos Devs 1–3.
+> Fases A, B e C do Dev 4 **concluídas** (a C é o `scripts/e2e.sh`, ainda não executado — ver [[12 - Implementação Devs 1, 2 e 3]]). Os serviços dos Devs 1–3 também já estão implementados.
 
 ## 1. O que foi entregue
 
@@ -149,7 +149,7 @@ Registrem prompts de IA em `docs/ai/` no mesmo commit do código.
 - Se o `docs/obsidian-vault` for aberto a partir da raiz do repositório, o Obsidian cria `.obsidian/` — considere ignorar no `.gitignore`.
 
 ## 6. O que falta (Dev 4, fase C)
-- [ ] Teste ponta a ponta com os 3 serviços reais (depende dos Devs 1–3)
-- [ ] Script `curl` do fluxo completo no README
-- [ ] Revisar contratos × implementação
+- [x] Script e2e (`scripts/e2e.sh`) e instruções no README
+- [x] Revisar contratos × implementação (rotas/DTOs cruzados; contrato do Merchant ganhou 409/503)
+- [ ] **Executar** o e2e e os testes de integração com Docker
 - [ ] (stretch) Job de reprocessamento de pagamentos `PENDING` com débito já confirmado

@@ -37,6 +37,9 @@ liberar:   reserved  -= v ; available += v
 | `status` | varchar | `PENDING`, `CONFIRMED`, `RELEASED` |
 | `created_at` / `updated_at` | timestamptz | |
 
+> [!info] Como foi implementado
+> A reserva faz primeiro `INSERT reservation … ON CONFLICT (payment_id) DO NOTHING` e só então o `UPDATE account … WHERE available >= :v`; se faltar saldo, o rollback desfaz o `INSERT`. Detalhes em [[12 - Implementação Devs 1, 2 e 3]].
+
 ## Operações (cada uma em UMA transação)
 ### Reservar
 1. Se existe reservation com esse `payment_id` → devolve a existente (idempotente).

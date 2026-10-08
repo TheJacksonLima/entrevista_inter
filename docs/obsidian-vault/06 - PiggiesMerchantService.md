@@ -23,6 +23,9 @@ Voltar: [[00 - Índice]] · Fluxo: [[02 - Arquitetura e Fluxo]]
 | `amount` | bigint | |
 | `created_at` | timestamptz | |
 
+> [!info] Como foi implementado
+> Republicação reutiliza o mesmo `eventId`; falha ao publicar devolve **503** (recebível fica gravado) e o retry republica; `paymentId` reutilizado com outro merchant/valor devolve **409**. Detalhes em [[12 - Implementação Devs 1, 2 e 3]].
+
 ## Fluxo do crédito
 
 ```mermaid

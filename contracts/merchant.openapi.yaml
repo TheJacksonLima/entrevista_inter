@@ -58,7 +58,14 @@ paths:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problem' }
         '409':
-          description: Merchant inativo.
+          description: Merchant inativo, ou paymentId já usado com merchant/valor diferentes.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+        '503':
+          description: |
+            Recebível gravado, mas o evento não pôde ser publicado no Kafka. É **retentável**:
+            repetir o mesmo paymentId republica o evento (mesmo eventId).
           content:
             application/problem+json:
               schema: { $ref: '#/components/schemas/Problem' }

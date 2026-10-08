@@ -52,6 +52,17 @@ Se `confirm` falha, ou o crédito falha depois do débito, o pagamento **fica `P
 ## ADR-12 — Entidade `Placeholder` temporária por módulo
 Micronaut/Hibernate não inicializa sem `@Entity`. Cada módulo traz uma `Placeholder` descartável para a app subir desde o início; cada dev a remove ao criar sua primeira entidade.
 
+## ADR-13 — Reserve: `INSERT … ON CONFLICT` antes do `UPDATE` de saldo ✅
+Resolve a corrida do mesmo `paymentId` sem tratar exceção e mantém a atomicidade do saldo (rollback desfaz o `INSERT`). Implementado pelo Dev 2.
+
+## ADR-14 — Merchant: 503 retentável e `eventId` estável ✅
+O recebível é gravado antes de publicar; se o Kafka falha, responde 503 e o retry republica com o **mesmo** `eventId` (consumidores deduplicam). O Coordinator já retenta o crédito. Implementado pelo Dev 3.
+
+## Dívidas conhecidas (ver [[12 - Implementação Devs 1, 2 e 3]])
+- `additionalProperties: false` dos contratos não é imposto pelo Micronaut Serde.
+- Reuso de `paymentId` com dados diferentes: Reserve devolve 200 (original), Merchant devolve 409 — alinhar.
+- Nada que usa Postgres/Kafka foi executado ainda.
+
 ## ⚠️ Lacuna no diagrama: reserva órfã
 No ramo `REJECTED` o diagrama só marca o status. Se a reserva deu certo e o merchant está inativo, o saldo fica preso em `PENDING`. Mantive o `POST /reserves/{id}/release` como compensação (nota [[05 - PiggiesReserveService]]) — **combinar com o time** se entra no escopo ou vira expiração (stretch).
 

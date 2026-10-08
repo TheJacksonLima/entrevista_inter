@@ -20,7 +20,7 @@ Voltar: [[00 - Índice]] · Cronograma geral: [[08 - Cronograma 1h30]]
 
 ## Detalhe por dev
 
-### Dev 1 — Coordinator: borda e persistência
+### Dev 1 — Coordinator: borda e persistência  ✅ implementado (testes de integração por rodar — [[12 - Implementação Devs 1, 2 e 3]])
 - [ ] Módulo `coordinator` (porta 8080), entidade `Payment` + repositório
 - [ ] `POST /payments`: valida body, gera `paymentId`, grava `PENDING`, devolve `202` + `Location`
 - [ ] `GET /payments/{id}`: `200`/`404`
@@ -29,14 +29,14 @@ Voltar: [[00 - Índice]] · Cronograma geral: [[08 - Cronograma 1h30]]
 - [ ] Atualização de status (`CONFIRMED`/`REJECTED` + `failure_reason`) exposta como `PaymentService`
 - [ ] Testes: unit (controller/serviço) + integração (Postgres Testcontainer, orquestrador mockado)
 
-### Dev 2 — Reserve
+### Dev 2 — Reserve  ✅ implementado (integração/concorrência por rodar — [[12 - Implementação Devs 1, 2 e 3]])
 - [ ] Módulo `reserve` (porta 8081), `account` + `reservation`, seed (`A`=1000, `B`=50, `POOR`=0)
 - [ ] `POST /reserves` com `UPDATE ... WHERE available >= v` (409 se insuficiente)
 - [ ] `POST /reserves/{id}/confirm` e `/release`, idempotentes
 - [ ] `GET /reserves/{id}`
 - [ ] Testes: transições, idempotência e **concorrência** (20 threads × 10 em saldo 100)
 
-### Dev 3 — Merchant e Kafka
+### Dev 3 — Merchant e Kafka  ✅ implementado (integração/Kafka por rodar — [[12 - Implementação Devs 1, 2 e 3]])
 - [ ] Módulo `merchant` (porta 8082), `merchant` + `receivable`, seed (`X` ativo, `Y` inativo)
 - [ ] `GET /merchants/{merchantId}/status`
 - [ ] `POST /receivables` idempotente (UNIQUE `payment_id`; 201 novo / 200 repetido)
@@ -57,8 +57,8 @@ Voltar: [[00 - Índice]] · Cronograma geral: [[08 - Cronograma 1h30]]
 - [x] Testes unit do orquestrador com todos os ramos (clients mockados)
 
 **Fase C (1:00–1:30), integração**
-- [ ] Teste ponta a ponta com os 3 serviços e script `curl` no README
-- [ ] Revisão de contratos × implementação
+- [x] Script ponta a ponta `scripts/e2e.sh` e instruções no README *(não executado — requer Docker)*
+- [x] Revisão de contratos × implementação
 
 ## Combinados de interface (fechar nos primeiros 10 min)
 

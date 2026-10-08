@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "docs/obsidian-vault/03 - Contratos (Contract-First).md",
+                "file": "docs/obsidian-vault/11 - Implementação Dev 4.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "03 - Contratos (Contract-First)"
+              "title": "11 - Implementação Dev 4"
             }
           }
         ]
@@ -99,7 +99,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "docs/obsidian-vault/03 - Contratos (Contract-First).md",
+                "file": "docs/obsidian-vault/11 - Implementação Dev 4.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -118,7 +118,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "docs/obsidian-vault/03 - Contratos (Contract-First).md",
+                "file": "docs/obsidian-vault/11 - Implementação Dev 4.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
@@ -161,7 +161,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "docs/obsidian-vault/03 - Contratos (Contract-First).md",
+                "file": "docs/obsidian-vault/11 - Implementação Dev 4.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
@@ -190,18 +190,23 @@
   },
   "active": "751cb53a6318b607",
   "lastOpenFiles": [
+    "docs/obsidian-vault/12 - Implementação Devs 1, 2 e 3.md",
+    "scripts/e2e.sh",
+    "scripts/e2e.sh.tmp.57444.bdadfe48c20c",
+    "scripts",
+    "contracts/merchant.openapi.yaml.tmp.57444.3a18efaab43d",
+    "merchant/target/merchant-0.1-shaded.jar",
+    "merchant/target/surefire-reports/2026-10-08T17-25-41_770.dumpstream",
+    "merchant/target/test-classes/co/inter/piggies/merchant/service/ReceivableServiceTest.class",
+    "merchant/target/test-classes/co/inter/piggies/merchant/service/ReceivableServiceTest$FakePublisher.class",
+    "merchant/target/test-classes/co/inter/piggies/merchant/service/ReceivableServiceTest$FakeStore.class",
+    "merchant/target/test-classes/co/inter/piggies/merchant/messaging/PagamentoConfirmadoJsonTest.class",
+    "docs/ai/2026-10-08-dev3-merchant.md",
+    "docs/ai/2026-10-08-dev2-reserve.md",
+    "docs/ai/2026-10-08-dev1-coordinator.md",
+    "docs/obsidian-vault/03 - Contratos (Contract-First).md",
     "docs/ai/2026-10-08-dev4-estrutura-contratos-orquestrador.md",
     "docs/obsidian-vault/11 - Implementação Dev 4.md",
-    "merchant/target/original-merchant-0.1.jar",
-    "merchant/target/merchant-0.1-shaded.jar",
-    "merchant/target/merchant-0.1.jar",
-    "merchant/target/maven-archiver/pom.properties",
-    "merchant/target/maven-archiver",
-    "merchant/target/surefire-reports/2026-10-08T17-14-50_276.dumpstream",
-    "merchant/target/surefire-reports",
-    "merchant/target/test-classes/co/inter/piggies/merchant/MerchantApplicationTest.class",
-    "merchant/target/test-classes/co/inter/piggies/merchant/$MerchantApplicationTest$Definition$Exec.class",
-    "merchant/target/test-classes/co/inter/piggies/merchant/$MerchantApplicationTest$Definition.class",
     "contracts/README.md",
     "docs/ai/README.md",
     "docs/obsidian-vault/02 - Arquitetura e Fluxo.md",

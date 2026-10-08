@@ -164,3 +164,7 @@ docker compose up -d                       # Postgres :5432 e Kafka :9092
 ./mvnw test                                # unitários + integração (integração requer Docker)
 ./mvnw test -Dtest='!*ApplicationTest'     # só o que não precisa de Docker
 ```
+
+Teste ponta a ponta (com `docker compose up -d` e os três serviços rodando): `./scripts/e2e.sh`
+— cobre caminho feliz, saldo insuficiente, merchant inativo (com liberação da reserva), merchant inexistente,
+idempotência e validação do body.

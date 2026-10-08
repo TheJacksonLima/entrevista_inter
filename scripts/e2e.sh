@@ -61,10 +61,16 @@ expect_http() { # <descrição> <status esperado> <curl args...>
   [ "$got" = "$want" ] && ok "$desc -> HTTP $got" || fail "$desc -> esperado HTTP $want, obtido $got"
 }
 
-echo "== Saúde dos serviços"
+echo "== Aguardando os serviços (até 120s cada)"
+wait_up() { # <url> -> 0 quando /health responde 200
+  for _ in $(seq 1 60); do
+    [ "$(curl -s -o /dev/null -w '%{http_code}' "$1/health")" = "200" ] && return 0
+    sleep 2
+  done
+  return 1
+}
 for url in "$COORD" "$RESERVE" "$MERCHANT"; do
-  code=$(curl -s -o /dev/null -w '%{http_code}' "$url/health")
-  [ "$code" = "200" ] && ok "$url/health" || { fail "$url/health -> HTTP $code (serviço no ar?)"; }
+  wait_up "$url" && ok "$url/health" || fail "$url/health não respondeu 200 (serviço no ar?)"
 done
 [ "$FAILS" -gt 0 ] && { echo "Serviços indisponíveis; abortando."; exit 1; }
 

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SPP — Documentação</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify@4.13.1/lib/themes/vue.css">
+  <style>
+    .markdown-section { max-width: 960px; }
+    .markdown-section blockquote { border-left: 4px solid #42b983; background: #f4faf7; }
+    .mermaid { text-align: center; margin: 1em 0; }
+  </style>
+</head>
+<body>
+  <div id="app">Carregando…</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({ startOnLoad: false, securityLevel: 'loose' });
+
+    // Links [[Nota]] do Obsidian -> rota do Docsify; parênteses precisam ser escapados no destino do link.
+    function safe(s) { return encodeURIComponent(s).replace(/\(/g, '%28').replace(/\)/g, '%29'); }
+
+    window.$docsify = {
+      name: 'SPP — Piggies',
+      homepage: 'README.md',
+      loadSidebar: true,
+      alias: { '/.*/_sidebar.md': '/_sidebar.md' },
+      subMaxLevel: 2,
+      auto2top: true,
+      plugins: [
+        function (hook) {
+          hook.beforeEach(function (md) {
+            return md
+              // front matter YAML do Obsidian
+              .replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '')
+              // [[Nota|alias]] e [[Nota]]
+              .replace(/\[\[([^\]|#]+)(?:#[^\]|]*)?(?:\|([^\]]+))?\]\]/g, function (_, target, alias) {
+                return '[' + (alias || target.trim()) + '](#/docs/obsidian-vault/' + safe(target.trim() + '.md').replace(/%2F/g, '/') + ')';
+              })
+              // callouts "> [!note] Título" -> citação com rótulo em negrito
+              .replace(/^> \[!(\w+)\][+-]?[ \t]*(.*)$/gm, function (_, kind, title) {
+                return '> **' + kind.toUpperCase() + (title ? ' — ' + title : '') + '**';
+              });
+          });
+          hook.doneEach(function () {
+            // blocos ```mermaid -> diagramas
+            var nodes = document.querySelectorAll('pre[data-lang="mermaid"] code, code.lang-mermaid');
+            var targets = [];
+            nodes.forEach(function (code) {
+              var pre = code.closest('pre');
+              var div = document.createElement('div');
+              div.className = 'mermaid';
+              div.textContent = code.textContent;
+              pre.replaceWith(div);
+              targets.push(div);
+            });
+            if (targets.length) { mermaid.run({ nodes: targets }).catch(function (e) { console.error(e); }); }
+          });
+        }
+      ]
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4.13.1/lib/docsify.min.js"></script>
+</body>
+</html>

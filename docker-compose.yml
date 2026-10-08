@@ -1,8 +1,20 @@
-# Infra local para rodar os três serviços à mão.
-#   docker compose up -d
-# Postgres: um servidor, três bancos (coordinator, reserve, merchant) — ver docker/postgres-init.
-# Kafka: single node KRaft, acessível em localhost:9092.
+# SPP — Sistema de Pagamento com Porquinhos
+#
+# Sem perfil (padrão) sobe só a infraestrutura, para rodar os serviços à mão com o Maven:
+#     docker compose up -d                                  # Postgres :5432 + Kafka :9092
+#     ./mvnw -pl coordinator -am mn:run                     # (um terminal por serviço)
+#
+# Perfis opcionais (combináveis):
+#     --profile app   os 3 serviços em containers   → :8080 coordinator · :8081 reserve · :8082 merchant
+#     --profile docs  documentação                  → http://localhost:8088 (Swagger UI) · http://localhost:8089 (docs)
+#     --profile test  testes (um "run" por vez)     → docker compose --profile test run --rm tests
+#     --profile e2e   teste ponta a ponta (curl)    → docker compose --profile app --profile e2e run --rm e2e
+#
+# Tudo de uma vez (exceto testes):  docker compose --profile app --profile docs up -d --build
+name: spp
+
 services:
+  # ------------------------------------------------------------------ infraestrutura
   postgres:
     image: postgres:16-alpine
     environment:
@@ -11,9 +23,150 @@ services:
     ports:
       - "5432:5432"
     volumes:
+      # Um servidor, três bancos (coordinator, reserve, merchant).
       - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
 
   kafka:
     image: apache/kafka-native:4.3.1
     ports:
-      - "9092:9092"
+      - "9092:9092"            # acesso do host (mn:run): localhost:9092
+    environment:
+      # Dois listeners: kafka:19092 dentro da rede do compose, localhost:9092 para o host.
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://:19092,EXTERNAL://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:19092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+  # ------------------------------------------------------------------ serviços (perfil "app")
+  coordinator:
+    profiles: [app]
+    build: { context: ., target: service, args: { MODULE: coordinator } }
+    image: spp-coordinator
+    ports: ["8080:8080"]
+    environment:
+      COORDINATOR_DB_URL: jdbc:postgresql://postgres:5432/coordinator
+      RESERVE_URL: http://reserve:8081
+      MERCHANT_URL: http://merchant:8082
+      MICRONAUT_SERVER_CORS_ENABLED: "true"   # permite o "Try it out" do Swagger UI
+    depends_on:
+      postgres: { condition: service_healthy }
+      reserve: { condition: service_started }
+      merchant: { condition: service_started }
+
+  reserve:
+    profiles: [app]
+    build: { context: ., target: service, args: { MODULE: reserve } }
+    image: spp-reserve
+    ports: ["8081:8081"]
+    environment:
+      RESERVE_DB_URL: jdbc:postgresql://postgres:5432/reserve
+      MICRONAUT_SERVER_CORS_ENABLED: "true"
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  merchant:
+    profiles: [app]
+    build: { context: ., target: service, args: { MODULE: merchant } }
+    image: spp-merchant
+    ports: ["8082:8082"]
+    environment:
+      MERCHANT_DB_URL: jdbc:postgresql://postgres:5432/merchant
+      KAFKA_BOOTSTRAP_SERVERS: kafka:19092
+      MICRONAUT_SERVER_CORS_ENABLED: "true"
+    depends_on:
+      postgres: { condition: service_healthy }
+      kafka: { condition: service_started }
+
+  # ------------------------------------------------------------------ documentação (perfil "docs")
+  # Contratos OpenAPI navegáveis, com "Try it out" contra os serviços (perfil app).
+  api-docs:
+    profiles: [docs]
+    image: swaggerapi/swagger-ui:v5.17.14
+    ports: ["8088:8080"]
+    environment:
+      URLS_PRIMARY_NAME: Coordinator
+      URLS: >-
+        [{"url":"contracts/coordinator.openapi.yaml","name":"Coordinator"},
+         {"url":"contracts/reserve.openapi.yaml","name":"Reserve"},
+         {"url":"contracts/merchant.openapi.yaml","name":"Merchant"}]
+    volumes:
+      - ./contracts:/usr/share/nginx/html/contracts:ro
+
+  # README, diagramas (Mermaid) e o vault do Obsidian renderizados no navegador (Docsify).
+  # Os scripts do site vêm de CDN: o navegador precisa de internet.
+  docs:
+    profiles: [docs]
+    image: nginx:1.27-alpine
+    ports: ["8089:80"]
+    volumes:
+      - ./docker/docs-site/index.html:/usr/share/nginx/html/index.html:ro
+      - ./docker/docs-site/_sidebar.md:/usr/share/nginx/html/_sidebar.md:ro
+      - ./README.md:/usr/share/nginx/html/README.md:ro
+      - ./docs:/usr/share/nginx/html/docs:ro
+      - ./contracts:/usr/share/nginx/html/contracts:ro
+
+  # ------------------------------------------------------------------ testes (perfis "test" / "e2e")
+  # Testcontainers precisa falar com o Docker do host: o socket é montado e os containers filhos
+  # são alcançados por host.docker.internal.
+  tests:
+    profiles: [test]
+    build: { context: ., target: tooling }
+    working_dir: /workspace
+    command: ["mvn", "-B", "test"]
+    environment:
+      TESTCONTAINERS_HOST_OVERRIDE: host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - .:/workspace
+      - m2cache:/root/.m2
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  # Mesmos testes, sem os que dependem de Docker (não precisa do socket). Roda em qualquer lugar.
+  tests-unit:
+    profiles: [test]
+    build: { context: ., target: tooling }
+    working_dir: /workspace
+    command:
+      - mvn
+      - -B
+      - test
+      - -Dtest=!*ApplicationTest,!PaymentControllerTest,!ReserveControllerIntegrationTest,!MerchantApiIntegrationTest
+      - -Dsurefire.failIfNoSpecifiedTests=false
+    volumes:
+      - .:/workspace
+      - m2cache:/root/.m2
+
+  # Cenários ponta a ponta contra os serviços do perfil "app".
+  e2e:
+    profiles: [e2e]
+    image: alpine:3.20
+    command: ["sh", "-c", "apk add --no-cache bash curl >/dev/null && bash /scripts/e2e.sh"]
+    environment:
+      COORDINATOR_URL: http://coordinator:8080
+      RESERVE_URL: http://reserve:8081
+      MERCHANT_URL: http://merchant:8082
+    volumes:
+      - ./scripts:/scripts:ro
+    depends_on:
+      - coordinator
+      - reserve
+      - merchant
+
+volumes:
+  pgdata:
+  m2cache:

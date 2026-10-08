@@ -1,0 +1,7 @@
+.git
+.idea
+.obsidian
+**/target
+docs
+scripts
+*.iml
